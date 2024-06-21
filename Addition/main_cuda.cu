@@ -1,9 +1,19 @@
-#include<iostream>
-#include <cstdlib>
-#include <assert.h>
+#include "iostream"
 #include "cuda.h"
+#include "stdlib.h"
+#include "assert.h"
 
 using namespace std;
+
+__global__ void AddVector(int *a, int *b, int *c, size_t count)
+{
+    unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+    if (threadId < count)
+    {
+        c[threadId] = a[threadId] + b[threadId];
+    }
+    return;
+}
 
 void init_arr(int* array, unsigned int size){
 	for(int i = 0; i < size; i++)
@@ -15,38 +25,78 @@ void check_array_sum(int* arr_first, int* arr_second, int* arr_third, unsigned i
 		assert(arr_first[i] + arr_second[i] == arr_third[i]);
 }
 
-__global__ void AddVector(int *first, int *second, int *third, int size){
-	unsigned int tId = blockIdx.x * blockDim.x + threadIdx.x;
-	if(tId < size) third[tId] = first[tId] + second[tId];
-}
-
 int main(){
-	size_t size = 32;
-	int *cpu_first = (int *)malloc(size * sizeof(int));
-	int *cpu_second = (int *)malloc(size * sizeof(int));
-	int *cpu_third = (int *)malloc(size * sizeof(int));
+    int count = 1000000;
 
-	init_arr(cpu_first, size);
-	init_arr(cpu_second, size);
+    int *first, *second, *output;
+    first = new int[count];
+    second = new int[count];
+    output = new int[count];
 
-	int *gpu_first, *gpu_second, *gpu_third;
-	cudaMalloc(&gpu_first, size * sizeof(int));
-	cudaMalloc(&gpu_second, size * sizeof(int));
-	cudaMalloc(&gpu_third, size * sizeof(int));
+    init_arr(first, count);
+    init_arr(second, count);
 
-	cudaMemcpy(gpu_first, cpu_first, size * sizeof(int), cudaMemcpyHostToDevice);
-	cudaMemcpy(gpu_second, cpu_second, size * sizeof(int), cudaMemcpyHostToDevice);	
-	
-	int threadPerBlock = 256;
-	int blocks = size / threadPerBlock + 1;
-	AddVector<<<blocks, threadPerBlock>>>(gpu_first, gpu_second, gpu_third, size);
+    int *d_first, *d_second, *d_output;
+    if(cudaMalloc(&d_first, sizeof(int) * count) != cudaSuccess){
+        cout << "Unable to allocate Memory GPU" << endl;
+        return -1;
+    }
+    if(cudaMalloc(&d_second, sizeof(int)*count) != cudaSuccess){
+        cudaFree(d_first);
+        cout  << "Unable to allocate Memory in GPU" << endl;
 
-	cudaMemcpy(cpu_third, gpu_third, size * sizeof(int), cudaMemcpyDeviceToHost);	
-	cudaFree(&gpu_first);
-	cudaFree(&gpu_second);
-	cudaFree(&gpu_third);
+        return -1;
+    }
+    if(cudaMalloc(&d_output, sizeof(int)*count) != cudaSuccess){
+        cudaFree(d_first);
+        cudaFree(d_second);
 
-	check_array_sum(cpu_first, cpu_second, cpu_third, size);	
-	printf("SUCCESS\n");
-	return 0;
+        cout << "Unable to allocate Memory in GPU" << endl;
+        return -1;
+    }
+
+
+    //Copying Host to memory    
+
+    if(cudaMemcpy(d_first, first, sizeof(int) * count, cudaMemcpyHostToDevice) != cudaSuccess){
+       cudaFree(d_first);
+       cudaFree(d_second);
+       cudaFree(d_output);
+
+       cout << "Unable to copy from HOST memory to Device Memory"; 
+       return -1;
+    }
+
+    if(cudaMemcpy(d_second, second, sizeof(int) * count, cudaMemcpyHostToDevice) != cudaSuccess){
+       cudaFree(d_first);
+       cudaFree(d_second);
+       cudaFree(d_output);
+
+       cout << "Unable to copy from HOST memory to Device Memory"; 
+
+       return -1;
+    }
+
+    int block = 256;
+    int grid = (count / block) + 1;
+    AddVector<<<grid, block>>>(d_first, d_second, d_output, count);
+
+    if(cudaMemcpy(output, d_output, sizeof(int)*count, cudaMemcpyDeviceToHost) != cudaSuccess){
+	cudaFree(d_first);
+       	cudaFree(d_second);
+       	cudaFree(d_output);
+
+       	cout << "Kernel called but unable to copy memory from device to host"; 
+       	return -1;
+    }
+
+    check_array_sum(first, second, output, count);	
+    printf("SUCCESS\n");
+
+    delete[] first;
+    delete[] second;
+    delete[] output;
+
+
+    return 0;  
 }
