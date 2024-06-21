@@ -82,7 +82,7 @@ int main(){
     AddVector<<<grid, block>>>(d_first, d_second, d_output, count);
 
     if(cudaMemcpy(output, d_output, sizeof(int)*count, cudaMemcpyDeviceToHost) != cudaSuccess){
-	cudaFree(d_first);
+	    cudaFree(d_first);
        	cudaFree(d_second);
        	cudaFree(d_output);
 

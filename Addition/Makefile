@@ -5,6 +5,12 @@ CFLAGS=-arch=sm_61
 
 gpu: main_cuda.cu
 	$(CC) main_cuda.cu -o main_cuda $(CFLAGS)
+	$(CC) main_cuda_um.cu -o main_cuda_um $(CFLAGS)
 
 cpu: main_cpu.cpp
 	$(CC) main_cpu.cpp -o main_cpu $(CFLAGS)
+
+clean:
+	rm main_cuda
+	rm main_cuda_um
+	rm main_cpu
