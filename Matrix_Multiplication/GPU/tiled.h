@@ -20,14 +20,14 @@ __global__ void multiply_mat_t(
     long long unsigned int* out
 ) {
 
-    __shared__ int A_T[TILED][TILED];
-    __shared__ int B_T[TILED][TILED]; 
-
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
 
     long long unsigned int val = 0;
     for(int t = 0; t < A_COL ; t += TILED){
+        __shared__ int A_T[TILED][TILED];
+        __shared__ int B_T[TILED][TILED]; 
+        
         if(t + threadIdx.y < A_COL) 
             A_T[threadIdx.x][threadIdx.y] = A[row * A_COL + t + threadIdx.y];
         else 

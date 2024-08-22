@@ -20,8 +20,8 @@ void print_mat(int R, int C, int* out){
 
 int main(){
     unsigned int A_ROW = 2377;
-    unsigned int A_COL = 511;
-    unsigned int B_ROW = 511;
+    unsigned int A_COL = 5011;
+    unsigned int B_ROW = 5011;
     unsigned int B_COL = 1967;
     unsigned int OUT_ROW = A_ROW;
     unsigned int OUT_COL = B_COL;
@@ -38,6 +38,8 @@ int main(){
     multiply_matrix_cpu(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT_CPU);
     auto end = TIME_NOW;
     std::cout << "CPU execution time: " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";   
+
+    GPU_Warmup();
 
     begin = TIME_NOW;  
     multiply_matrix_gpu_naive(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT_GPU); 

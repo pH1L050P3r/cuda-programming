@@ -26,4 +26,11 @@ void check_matrix(int ROW, int COL, long long unsigned int* SRC, long long unsig
     }
 }
 
+
+void GPU_Warmup(){
+    int* A;
+    cudaMalloc(&A, sizeof(int) * 10240);
+    cudaFree(A);
+}
+
 #endif
