@@ -18,8 +18,8 @@ __global__ void multiply_mat_n(
     unsigned int OUT_COL,
     long long unsigned int* out
 ) {
-    unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
 
     if(row < OUT_ROW && col < OUT_COL){
         long long unsigned int val = 0;
@@ -43,8 +43,8 @@ void multiply_matrix_gpu_naive(
 ){
     dim3 block(THREAD_Y, THREAD_X);
     dim3 grid(
-        ((OUT_ROW-1) / block.y) + 1, 
-        ((OUT_COL-1) / block.x) + 1
+        (OUT_ROW + block.x - 1) / block.x, 
+        (OUT_COL + block.y - 1) / block.y
     );
 
     int* G_A, *G_B;
@@ -82,6 +82,9 @@ void multiply_matrix_gpu_naive(
         std::cout << "Unable to Copy Memory from GPU to CPU : error code = " << cudaGetLastError() << std::endl;
         return;
     }
+    cudaFree(G_A);
+    cudaFree(G_B);
+    cudaFree(G_OUT);
 }
 
 #endif

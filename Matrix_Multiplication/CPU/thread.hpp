@@ -21,11 +21,11 @@ void multiply_matrix_cpu(
 
     for(unsigned int i = 0; i < OUT_ROW; i++){
         for(unsigned int j = 0; j < OUT_COL; j++){
-            int ans = 0;
+            long long unsigned int ans = 0;
             for(unsigned int k = 0; k < A_COL; k++){
                 ans += A[i * A_COL + k] * B[k * B_COL + j];
             }
-            OUT[i * OUT_ROW + j] = ans;
+            OUT[i * OUT_COL + j] = ans;
         }
     }
     return;

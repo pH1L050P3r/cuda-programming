@@ -23,20 +23,28 @@ __global__ void multiply_mat_t(
     __shared__ int A_T[TILED][TILED];
     __shared__ int B_T[TILED][TILED]; 
 
-    unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if(row < OUT_ROW && col < OUT_COL){
-        long long unsigned int val = 0;
-        for(int t = 0; t < A_COL / TILED; t++){
-            A_T[threadIdx.y][threadIdx.x] = A[row * A_COL + t * TILED + threadIdx.x];
-            B_T[threadIdx.y][threadIdx.x] = B[(t * TILED + threadIdx.y) * B_COL + col];
-            __syncthreads();
-            for(unsigned int k = 0; k < TILED; k++){
-                val += A_T[threadIdx.y][k] * B_T[k][threadIdx.x];
-            }
-            __syncthreads();
+    long long unsigned int val = 0;
+    for(int t = 0; t < A_COL ; t += TILED){
+        if(t + threadIdx.y < A_COL) 
+            A_T[threadIdx.x][threadIdx.y] = A[row * A_COL + t + threadIdx.y];
+        else 
+            A_T[threadIdx.x][threadIdx.y] = 0;
+        
+        if(t + threadIdx.x < B_ROW)
+            B_T[threadIdx.x][threadIdx.y] = B[(t + threadIdx.x) * B_COL + col];
+        else
+            B_T[threadIdx.x][threadIdx.y] = 0;
+
+        __syncthreads();
+        for(unsigned int k = 0; k < TILED; k++){
+            val += A_T[threadIdx.x][k] * B_T[k][threadIdx.y];
         }
+        __syncthreads();
+    }
+    if(row < OUT_ROW && col < OUT_COL){
         out[row * OUT_COL + col] = val;
     }
 }
@@ -54,8 +62,8 @@ void multiply_matrix_gpu_tiled(
 ){
     dim3 block(THREAD_Y, THREAD_X);
     dim3 grid(
-        ((OUT_ROW-1) / block.y) + 1, 
-        ((OUT_COL-1) / block.x) + 1
+        (OUT_ROW + block.x - 1) / block.x, 
+        (OUT_COL + block.y - 1) / block.y
     );
 
     int* G_A, *G_B;
@@ -93,6 +101,9 @@ void multiply_matrix_gpu_tiled(
         std::cout << "Unable to Copy Memory from GPU to CPU : error code = " << cudaGetLastError() << std::endl;
         return;
     }
+    cudaFree(G_A);
+    cudaFree(G_B);
+    cudaFree(G_OUT);
 }
 
 #endif
