@@ -4,10 +4,10 @@
 #include "cuda.h"
 #include <iostream>
 
-#define THREAD_X 32
-#define THREAD_Y 32
+#define THREAD_X 16
+#define THREAD_Y 16
 
-__global__ void multiply_mat_k(
+__global__ void multiply_mat_n(
     unsigned int A_ROW,
     unsigned int A_COL,
     int* A,
@@ -30,7 +30,7 @@ __global__ void multiply_mat_k(
     }
 }
 
-void multiply_matrix_gpu(
+void multiply_matrix_gpu_naive(
     unsigned int A_ROW,
     unsigned int A_COL,
     int* A,
@@ -72,7 +72,7 @@ void multiply_matrix_gpu(
         return;
     }
 
-    multiply_mat_k<<<grid, block>>>(A_ROW, A_COL, G_A, B_ROW, B_COL, G_B, OUT_ROW, OUT_COL, G_OUT);
+    multiply_mat_n<<<grid, block>>>(A_ROW, A_COL, G_A, B_ROW, B_COL, G_B, OUT_ROW, OUT_COL, G_OUT);
     
     if(cudaDeviceSynchronize() != cudaSuccess){
         std::cout << "Error while executing above kernel : error code = " << cudaGetLastError() << std::endl;
