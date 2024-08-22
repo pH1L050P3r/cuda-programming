@@ -19,7 +19,7 @@ void init_matrix(int ROW, int COL, int* MAT){
 void check_matrix(int ROW, int COL, long long unsigned int* SRC, long long unsigned int* ANS){
     for(unsigned int i = 0; i < ROW; i++){
         for(unsigned int j = 0; j < COL; j++){
-            std::cout << SRC[i*COL + j]  << " " << ANS[i*COL + j] << std::endl;
+            // std::cout << SRC[i*COL + j]  << " " << ANS[i*COL + j] << std::endl;
             assert(SRC[i*COL + j] == ANS[i*COL + j]);
         }
     }

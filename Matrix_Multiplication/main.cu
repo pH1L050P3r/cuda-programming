@@ -18,11 +18,11 @@ void print_mat(int R, int C, int* out){
 }
 
 int main(){
-    unsigned int A_ROW = 10;
-    unsigned int A_COL = 10;
+    unsigned int A_ROW = 10240;
+    unsigned int A_COL = 10240;
 
-    unsigned int B_ROW = 10;
-    unsigned int B_COL = 10;
+    unsigned int B_ROW = 10240;
+    unsigned int B_COL = 10240;
 
     unsigned int OUT_ROW = A_ROW;
     unsigned int OUT_COL = B_COL;
@@ -36,9 +36,19 @@ int main(){
     init_matrix(B_ROW, B_COL, B);
 
     auto begin = TIME_NOW;  
-    multiply_matrix_gpu(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT_GPU);
     multiply_matrix_cpu(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT_CPU);
     auto end = TIME_NOW;
-    std::cout << "Reference execution time: " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";    
+    std::cout << "CPU execution time: " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";   
+
+    begin = TIME_NOW;  
+    multiply_matrix_gpu(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT_GPU); 
+    end = TIME_NOW;
+    std::cout << "GPU execution time: " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";  
+        
     check_matrix(OUT_ROW, OUT_COL, OUT_CPU, OUT_GPU);
+
+    free(A);
+    free(B);
+    free(OUT_CPU);
+    free(OUT_GPU);
 }

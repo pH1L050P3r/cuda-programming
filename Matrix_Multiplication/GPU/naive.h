@@ -51,20 +51,37 @@ void multiply_matrix_gpu(
     long long unsigned int *G_OUT;
 
     if(cudaMalloc(&G_A, A_ROW * A_COL * sizeof(int)) != cudaSuccess){
-        std::cout << "Unable to allocate Memory GPU" << std::endl;
+        std::cout << "Unable to allocate Memory GPU : error code = " << cudaGetLastError() << std::endl;
         return;
     }
-    cudaMalloc(&G_B, B_ROW * B_COL * sizeof(int));
-    cudaMalloc(&G_OUT, OUT_ROW * OUT_COL * sizeof(long long unsigned int));
+    if(cudaMalloc(&G_B, B_ROW * B_COL * sizeof(int)) != cudaSuccess){
+        std::cout << "Unable to allocate Memory GPU : error code = " << cudaGetLastError() << std::endl;
+        return;
+    }
+    if(cudaMalloc(&G_OUT, OUT_ROW * OUT_COL * sizeof(long long unsigned int)) != cudaSuccess){
+        std::cout << "Unable to allocate Memory GPU : error code = " << cudaGetLastError() << std::endl;
+        return;
+    }
 
-    cudaMemcpy(G_A, A, sizeof(int) * A_ROW * A_COL , cudaMemcpyHostToDevice);
-    cudaMemcpy(G_B, B, sizeof(int) * B_ROW * B_COL , cudaMemcpyHostToDevice);
+    if(cudaMemcpy(G_A, A, sizeof(int) * A_ROW * A_COL , cudaMemcpyHostToDevice) != cudaSuccess){
+        std::cout << "Unable to Copy Memory from CPU to GPU : error code = " << cudaGetLastError() << std::endl;
+        return;
+    }
+    if(cudaMemcpy(G_B, B, sizeof(int) * B_ROW * B_COL , cudaMemcpyHostToDevice) != cudaSuccess){
+        std::cout << "Unable to Copy Memory from CPU to GPU : error code = " << cudaGetLastError() << std::endl;
+        return;
+    }
 
-    multiply_mat_k<<<grid, block>>>(A_ROW, A_COL, A, B_ROW, B_COL, B, OUT_ROW, OUT_COL, OUT);
+    multiply_mat_k<<<grid, block>>>(A_ROW, A_COL, G_A, B_ROW, B_COL, G_B, OUT_ROW, OUT_COL, G_OUT);
+    
+    if(cudaDeviceSynchronize() != cudaSuccess){
+        std::cout << "Error while executing above kernel : error code = " << cudaGetLastError() << std::endl;
+    }
 
-    cudaMemcpy(OUT, G_OUT, sizeof(long long unsigned int) * OUT_ROW * OUT_COL, cudaMemcpyDeviceToHost);
-
-    std::cout << OUT[0] << std::endl;
+    if(cudaMemcpy(OUT, G_OUT, sizeof(long long unsigned int) * OUT_ROW * OUT_COL, cudaMemcpyDeviceToHost) != cudaSuccess){
+        std::cout << "Unable to Copy Memory from GPU to CPU : error code = " << cudaGetLastError() << std::endl;
+        return;
+    }
 }
 
 #endif
