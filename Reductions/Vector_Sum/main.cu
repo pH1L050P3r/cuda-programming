@@ -5,7 +5,7 @@
 #include <chrono>
 
 #include "CPU/vector_sum.hpp"
-#include "GPU/naive.h"
+#include "GPU/naive with_warp_shuffel.h"
 
 #define TIME_NOW std::chrono::high_resolution_clock::now()
 #define TIME_DIFF(gran, start, end) std::chrono::duration_cast<gran>(end - start).count()
@@ -26,7 +26,7 @@ void check_sum(int* vec, size_t size, long long int sum){
 
 int main(){
 
-    size_t size = (1 << 29);
+    size_t size = (1 << 29) + (1 << 28);
     int* vec = (int *)malloc(sizeof(int) * size);
 
     vector_init(vec, size);
@@ -41,7 +41,7 @@ int main(){
     begin = TIME_NOW;  
     std::vector_sum_gpu(vec, size, &sum);
     end = TIME_NOW;
-    std::cout << "GPU execution time : naive : " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";  
+    std::cout << "GPU execution time : " << (double)TIME_DIFF(std::chrono::microseconds, begin, end) / 1000.0 << " ms\n";  
     check_sum(vec, size, sum);
     
 
